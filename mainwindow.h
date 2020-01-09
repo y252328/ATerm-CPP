@@ -38,6 +38,7 @@ private:
     Ui::MainWindow *ui;
     QSerialPort ser;
     YAML::Node setting;
+    bool eventFilter(QObject *object, QEvent *event);
     const std::string default_setting_str;
     void load_setting();
     void save_setting();

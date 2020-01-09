@@ -6,6 +6,7 @@
 #include <QFile>
 #include <string>
 #include <fstream>
+#include <QKeyEvent>
 #include <qDebug>
 #include <QDir>
 
@@ -23,7 +24,28 @@ MainWindow::MainWindow(QWidget *parent)
     ui->baudComboBox->addItems(baud_list);
     load_setting();
     on_refreshBtn_clicked();
+    ui->outputTextBrowser->installEventFilter(this);
 
+}
+
+bool MainWindow::eventFilter(QObject *object, QEvent *event)
+{
+    if (object == ui->outputTextBrowser && event->type() == QEvent::KeyPress) {
+        QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
+        auto key = keyEvent->key();
+        if (ser.isOpen() && (key == Qt::Key_Enter || key == Qt::Key_Return)) {
+            on_sendBtn_clicked();
+        } else {
+            QString txt = ui->inputLineEdit->text();
+            if (key == Qt::Key_Backspace) {
+                txt = txt.mid(0, txt.size()-1);
+            } else if(keyEvent->text() != ""){
+                txt = txt + keyEvent->text();
+            }
+            ui->inputLineEdit->setText(txt);
+        }
+    }
+    return QMainWindow::eventFilter(object, event);
 }
 
 MainWindow::~MainWindow()
@@ -106,7 +128,15 @@ void MainWindow::ser_data_ready() {
 void MainWindow::on_sendBtn_clicked()
 {
     if (ser.isOpen()) {
-        auto msg = ui->inputLineEdit->text() + '\n';
+        QString eol;
+        if (ui->EOLComboBox->currentText() == "LF")
+            eol = "\n";
+        if (ui->EOLComboBox->currentText() == "CR;LF")
+            eol = "\r\n";
+        if (ui->EOLComboBox->currentText() == "CR")
+            eol = "\r";
+
+        auto msg = ui->inputLineEdit->text() + eol;
         auto bytes = msg.toLatin1();
         ser.write(bytes);
         ui->inputLineEdit->clear();
