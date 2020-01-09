@@ -32,3 +32,14 @@ FORMS += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/yaml-cpp/lib/ -lyaml-cpp
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/yaml-cpp/lib/ -lyaml-cppd
+
+INCLUDEPATH += $$PWD/yaml-cpp/include
+DEPENDPATH += $$PWD/yaml-cpp/include
+
+win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/yaml-cpp/lib/libyaml-cpp.a
+else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/yaml-cpp/lib/libyaml-cppd.a
+else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/yaml-cpp/lib/yaml-cpp.lib
+else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/yaml-cpp/lib/yaml-cppd.lib

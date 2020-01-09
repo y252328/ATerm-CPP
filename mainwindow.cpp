@@ -4,12 +4,16 @@
 #include <QtSerialPort/QSerialPort>
 #include <QFileDialog>
 #include <QFile>
+#include <string>
+#include <fstream>
 #include <qDebug>
+#include <QDir>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
     , ser(this)
+    , default_setting_str("---\npriority: []\nbaud: {}\ncustom_baud: []\n")
 {
     ui->setupUi(this);
     connect(&ser, &QSerialPort::readyRead, this, &MainWindow::ser_data_ready);
@@ -17,6 +21,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&ser, &QSerialPort::errorOccurred, this, &MainWindow::on_serial_errorOccurred);
     QStringList baud_list = {"9600", "115200"};
     ui->baudComboBox->addItems(baud_list);
+    load_setting();
     on_refreshBtn_clicked();
 
 }
@@ -71,7 +76,8 @@ void MainWindow::on_connectBtn_clicked(bool force)
            }
         }
     } else {
-        ser.close();
+        if (ser.isOpen())
+            ser.close();
         ui->connectBtn->setText("Connect");
         ui->sendBtn->setEnabled(false);
         ui->sendFileBtn->setEnabled(false);
@@ -124,4 +130,23 @@ void MainWindow::on_sendFileBtn_clicked()
             ser.write(bytes);
         }
     }
+}
+
+void MainWindow::load_setting() {
+    auto default_setting = YAML::Load(default_setting_str);
+    std::fstream file("../setting.yaml", std::fstream::in);
+    setting = YAML::Load(file);
+    file.close();
+    for ( const auto & pair : default_setting) {
+        const auto & key = pair.first.as<std::string>();
+        if (!setting[key].IsDefined()){
+            setting[key] = pair.second;
+        }
+    }
+}
+
+void MainWindow::save_setting() {
+    std::fstream fout("../setting.yaml", std::fstream::out);
+    fout << setting;
+    fout.close();
 }

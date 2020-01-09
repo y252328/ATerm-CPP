@@ -4,6 +4,8 @@
 #include <QtSerialPort/QSerialPortInfo>
 #include <QtSerialPort/QSerialPort>
 #include <QMainWindow>
+#include <string>
+#include "yaml-cpp/yaml.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -35,7 +37,10 @@ private slots:
 private:
     Ui::MainWindow *ui;
     QSerialPort ser;
-
+    YAML::Node setting;
+    const std::string default_setting_str;
+    void load_setting();
+    void save_setting();
     void append(const QString &);
 
 };
