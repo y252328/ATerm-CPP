@@ -34,12 +34,16 @@ private slots:
 
     void on_sendFileBtn_clicked();
 
+    void on_portComboBox_currentIndexChanged(int index);
+
+    void on_autoScrollCheckBox_stateChanged(int state);
+
 private:
     Ui::MainWindow *ui;
     QSerialPort ser;
     YAML::Node setting;
     bool eventFilter(QObject *object, QEvent *event);
-    const std::string default_setting_str;
+    static const std::string default_setting_str;
     void load_setting();
     void save_setting();
     void append(const QString &);

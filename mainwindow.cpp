@@ -4,19 +4,28 @@
 #include <QtSerialPort/QSerialPort>
 #include <QFileDialog>
 #include <QFile>
+#include <QScrollBar>
+#include <QKeyEvent>
+#include <QDir>
+#include <qDebug>
+
 #include <string>
 #include <fstream>
-#include <QKeyEvent>
-#include <qDebug>
-#include <QDir>
+
+#define VERSION "v1.2.1"
+#define SETTING_PATH "./setting.yaml"
+
+const std::string MainWindow::default_setting_str("---\npriority: []\nbaud: {}\ncustom_baud: []\n");
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
     , ser(this)
-    , default_setting_str("---\npriority: []\nbaud: {}\ncustom_baud: []\n")
 {
     ui->setupUi(this);
+
+    ui->outputTextBrowser->verticalScrollBar()->setStyleSheet(
+                "background-color: rgb(240, 240, 240);\n""color: rgb(12, 12, 12);");
     connect(&ser, &QSerialPort::readyRead, this, &MainWindow::ser_data_ready);
     connect(ui->inputLineEdit, &QLineEdit::returnPressed, this, &MainWindow::on_sendBtn_clicked);
     connect(&ser, &QSerialPort::errorOccurred, this, &MainWindow::on_serial_errorOccurred);
@@ -51,6 +60,7 @@ bool MainWindow::eventFilter(QObject *object, QEvent *event)
 MainWindow::~MainWindow()
 {
     ser.close();
+    save_setting();
     delete ui;
 }
 
@@ -70,6 +80,27 @@ void MainWindow::on_refreshBtn_clicked()
     }
     port_list.sort();
     ui->portComboBox->addItems(port_list);
+    for(size_t i = 0 ; i < setting["priority"].size() ; ++ i) {
+        for(int j = 0 ; j < port_list.size() ; ++ j) {
+            if (port_list[j].contains(setting["priority"][i].as<std::string>().c_str(), Qt::CaseInsensitive)) {
+                ui->portComboBox->setCurrentIndex(j);
+                return;
+            }
+        }
+    }
+}
+
+void MainWindow::on_portComboBox_currentIndexChanged(int index) {
+    auto port_name = ui->portComboBox->itemText(index);
+    for( const auto & pair : setting["baud"]){
+        if (port_name.contains(pair.first.as<std::string>().c_str(), Qt::CaseInsensitive)) {
+            if (pair.second.as<int>() == 9600) {
+                ui->baudComboBox->setCurrentIndex(0);
+            } else{
+                ui->baudComboBox->setCurrentIndex(1);
+            }
+        }
+    }
 }
 
 void MainWindow::on_connectBtn_clicked(bool force)
@@ -110,13 +141,22 @@ void MainWindow::on_connectBtn_clicked(bool force)
 }
 
 void MainWindow::append(const QString &msg) {
-//    auto text = ui->outputTextBrowser->toPlainText();
+    auto scrollBar = ui->outputTextBrowser->verticalScrollBar();
+    auto slider_pos = scrollBar->value();
     ui->outputTextBrowser->moveCursor (QTextCursor::End);
     ui->outputTextBrowser->insertPlainText (msg);
-    ui->outputTextBrowser->moveCursor (QTextCursor::End);
 
     if (ui->autoScrollCheckBox->isChecked()){
-        auto scroll_bar = ui->outputTextBrowser->verticalScrollBar();
+        scrollBar->setValue(scrollBar->maximum());
+    } else {
+        scrollBar->setValue(slider_pos);
+    }
+}
+
+void MainWindow::on_autoScrollCheckBox_stateChanged(int state) {
+    if (state == Qt::Checked) {
+        auto scrollBar = ui->outputTextBrowser->verticalScrollBar();
+        scrollBar->setValue(scrollBar->maximum());
     }
 }
 
@@ -164,7 +204,7 @@ void MainWindow::on_sendFileBtn_clicked()
 
 void MainWindow::load_setting() {
     auto default_setting = YAML::Load(default_setting_str);
-    std::fstream file("../setting.yaml", std::fstream::in);
+    std::fstream file(SETTING_PATH, std::fstream::in);
     setting = YAML::Load(file);
     file.close();
     for ( const auto & pair : default_setting) {
@@ -176,7 +216,7 @@ void MainWindow::load_setting() {
 }
 
 void MainWindow::save_setting() {
-    std::fstream fout("../setting.yaml", std::fstream::out);
+    std::fstream fout(SETTING_PATH, std::fstream::out);
     fout << setting;
     fout.close();
 }
