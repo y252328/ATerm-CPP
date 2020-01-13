@@ -1,13 +1,13 @@
 # ATerm-CPP
 This project, ATerm-CPP, is a simple serial terminal implemented in Qt. \
-ATerm-CPP is the C++ version of [this](https://github.com/y252328/ATerm). The functions are almost same at same version number between CPP and Python version.\
+ATerm-CPP is the C++ version of [this](https://github.com/y252328/ATerm). The functions are almost same with Python version at same version number.\
 ATerm not only can send/recive ascii text but also send file(binary).
 
 ![](https://i.imgur.com/iVVejkq.png)
 
 ## Setting
 This section will talk about how to config ATerm(e.g., priority of ports, default baud rate, etc.) through writing the setting file.
-The setting file is a YAML file and place in directory of program. There are following options in file.
+The setting file is a YAML file and place in the directory of program. There are following options in file.
 * priority: a list. ATerm will compare available com ports with this list and select the highest priority and available port on refresh bottom clicked.
 * baud: the key/value pairs. Key is the port name. Value is the baud rate.
 * path: a string. Default directory of open file dialog of sending file.
