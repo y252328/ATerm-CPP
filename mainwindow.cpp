@@ -14,7 +14,7 @@
 #include <set>
 #include <fstream>
 
-#define VERSION "v1.2.1"
+#define VERSION "v1.3.0"
 #define SETTING_PATH "./setting.yaml"
 
 const std::string MainWindow::default_setting_str("---\npriority: []\nbaud: {}\ncustom_baud: []\n");
