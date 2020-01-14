@@ -5,11 +5,13 @@
 #include <QFileDialog>
 #include <QFile>
 #include <QScrollBar>
+#include <QLineEdit>
 #include <QKeyEvent>
 #include <QDir>
 #include <qDebug>
 
 #include <string>
+#include <set>
 #include <fstream>
 
 #define VERSION "v1.2.1"
@@ -30,12 +32,22 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&ser, &QSerialPort::readyRead, this, &MainWindow::ser_data_ready);
     connect(ui->inputLineEdit, &QLineEdit::returnPressed, this, &MainWindow::on_sendBtn_clicked);
     connect(&ser, &QSerialPort::errorOccurred, this, &MainWindow::on_serial_errorOccurred);
-    QStringList baud_list = {"9600", "115200"};
-    ui->baudComboBox->addItems(baud_list);
-    load_setting();
-    on_refreshBtn_clicked();
     ui->outputTextBrowser->installEventFilter(this);
 
+    load_setting();
+
+    std::set<int> baud_list_int = {9600, 115200};
+    for (const auto &a : this->setting["custom_baud"]){
+        baud_list_int.insert(a.as<int>());
+    }
+    QStringList baud_list;
+    for (const auto a : baud_list_int) {
+        baud_list.push_back(QString::number(a));
+    }
+    ui->baudComboBox->addItems(baud_list);
+    ui->baudComboBox->setLineEdit(new QLineEdit(this));
+
+    on_refreshBtn_clicked();
 }
 
 bool MainWindow::eventFilter(QObject *object, QEvent *event)
@@ -95,11 +107,8 @@ void MainWindow::on_portComboBox_currentIndexChanged(int index) {
     auto port_name = ui->portComboBox->itemText(index);
     for( const auto & pair : setting["baud"]){
         if (port_name.contains(pair.first.as<std::string>().c_str(), Qt::CaseInsensitive)) {
-            if (pair.second.as<int>() == 9600) {
-                ui->baudComboBox->setCurrentIndex(0);
-            } else{
-                ui->baudComboBox->setCurrentIndex(1);
-            }
+            this->ui->baudComboBox->lineEdit()->setText(QString::number(pair.second.as<int>()));
+            this->ui->baudComboBox->setCurrentIndex(0);
         }
     }
 }
