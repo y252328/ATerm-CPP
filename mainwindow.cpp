@@ -23,9 +23,10 @@ MainWindow::MainWindow(QWidget *parent)
     , ser(this)
 {
     ui->setupUi(this);
-
     ui->outputTextBrowser->verticalScrollBar()->setStyleSheet(
                 "background-color: rgb(240, 240, 240);\n""color: rgb(12, 12, 12);");
+    this->setWindowTitle(QString("ATerm ")+VERSION);
+
     connect(&ser, &QSerialPort::readyRead, this, &MainWindow::ser_data_ready);
     connect(ui->inputLineEdit, &QLineEdit::returnPressed, this, &MainWindow::on_sendBtn_clicked);
     connect(&ser, &QSerialPort::errorOccurred, this, &MainWindow::on_serial_errorOccurred);
